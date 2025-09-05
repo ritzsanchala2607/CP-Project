@@ -1,0 +1,11 @@
+Flask
+gunicorn
+Pillow
+opencv-python
+torch
+torchvision
+mediapipe
+transformers
+diffusers
+safetensors
+flask-cors

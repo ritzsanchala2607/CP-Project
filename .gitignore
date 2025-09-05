@@ -1,0 +1,7 @@
+# Ignore user uploads and generated output
+static/uploads/*
+static/outputs/*
+
+# But keep the directories themselves
+!static/uploads/.gitkeep
+!static/outputs/.gitkeep
