@@ -21,7 +21,31 @@
             <div class="grid grid-cols-1 gap-8">
                 <!-- Person Image Upload -->
                 <div>
-                    <h2 class="text-lg font-semibold mb-2">Upload your photo</h2>
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-lg font-semibold">Upload your photo</h2>
+                        {% if cached_person %}
+                        <button type="button" onclick="changePerson()" class="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-3 py-1 rounded-lg transition">
+                            Change Person
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    {% if cached_person %}
+                    <!-- Show cached person image -->
+                    <div class="border-2 border-green-500 rounded-xl p-4 bg-green-900/20">
+                        <div class="flex flex-col items-center">
+                            <div class="flex items-center gap-2 mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                <p class="text-green-400 text-sm font-medium">Person image cached</p>
+                            </div>
+                            <img src="/uploads/person.jpg" alt="Cached Person" class="max-h-32 rounded-lg border border-gray-600">
+                            <p class="text-gray-400 text-xs mt-2">Coordinates saved - no need to re-upload!</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- Upload new person image -->
                     <label for="person_image" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-xl p-6 hover:bg-gray-700 cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400 mb-2" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -29,18 +53,29 @@
                                 d="M7 16v4m0 0h10m-10 0v-4m0 0h10m-10 0V5m0 0h10m-10 0H5m14 0h-2" />
                         </svg>
                         <p class="text-gray-400">Drag & drop or click to upload</p>
-                        <input id="person_image" type="file" name="person_image" class="hidden" required
+                        <input id="person_image" type="file" name="person_image" class="hidden" 
                             onchange="showFileName('person_image', 'person_filename', 'person_preview')">
                     </label>
                     <p id="person_filename" class="text-green-400 text-sm mt-2 text-center"></p>
                     <div class="mt-3 flex justify-center">
                         <img id="person_preview" class="hidden max-h-32 rounded-lg border border-gray-600">
                     </div>
+                    {% endif %}
                 </div>
 
                 <!-- Garment Image Upload with Cropper -->
                 <div>
-                    <h2 class="text-lg font-semibold mb-2">Upload garment image</h2>
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-lg font-semibold">Upload garment image</h2>
+                        {% if cached_person %}
+                        <div class="flex items-center gap-1 text-xs text-green-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>Fast mode</span>
+                        </div>
+                        {% endif %}
+                    </div>
                     <label for="tshirt_image" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-xl p-6 hover:bg-gray-700 cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400 mb-2" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -73,6 +108,13 @@
             {% if result_img %}
             <div>
                 <h2 class="text-2xl font-bold mb-6 text-center">🎉 Your Virtual Try-On Result</h2>
+                {% if processing_time %}
+                <div class="text-center mb-4">
+                    <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
+                        ⚡ Processed in {{ processing_time }}
+                    </span>
+                </div>
+                {% endif %}
                 <div class="flex justify-center mb-6">
                     <img id="result-image" src="{{ result_img }}" alt="Result Image" class="rounded-xl">
                 </div>
@@ -138,6 +180,25 @@
             document.getElementById('placeholder-text').style.display = 'none';
             document.getElementById('loading-spinner').style.display = 'flex';
         });
+
+        // Change Person function
+        function changePerson() {
+            fetch('/change_person', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Replace the current page content
+                document.documentElement.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error changing person:', error);
+                alert('Error changing person. Please refresh the page.');
+            });
+        }
 
         // Show file name + preview (person only)
         function showFileName(inputId, filenameId, previewId) {
