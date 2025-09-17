@@ -147,6 +147,7 @@ def index():
             cached_person_flag = use_cached_person
             person_coordinates = None
             person_path = None
+            person_disk_path = os.path.join(UPLOAD_FOLDER, 'person.jpg')
             
             if use_cached_person:
                 # Use cached person image and coordinates
@@ -155,22 +156,27 @@ def index():
                 print(f"[INFO] Using cached person image: {person_path}")
                 print(f"[INFO] Using cached coordinates: {person_coordinates}")
             else:
-                # Process new person image
+                # Process new person image, or reuse existing person on disk if session missing
                 person_file = request.files.get('person_image')
-                if not person_file or person_file.filename == '':
+                if person_file and person_file.filename != '':
+                    # New person uploaded
+                    person_path = person_disk_path
+                    person_file.save(person_path)
+                    print(f"[INFO] Saved new person image to {person_path}")
+                elif os.path.exists(person_disk_path):
+                    # No upload this time, but previous person still on disk
+                    person_path = person_disk_path
+                    print(f"[INFO] Reusing existing person image on disk: {person_path}")
+                else:
                     return "No person image provided. Please upload a person image first."
-                
-                person_path = os.path.join(UPLOAD_FOLDER, 'person.jpg')
-                person_file.save(person_path)
-                print(f"[INFO] Saved new person image to {person_path}")
-                
-                # Detect pose and get coordinates
+
+                # Detect pose and get coordinates (regenerate if session missing)
                 left_shoulder, right_shoulder = detect_pose_and_get_coordinates(person_path)
                 person_coordinates = {
                     'left_shoulder': left_shoulder,
                     'right_shoulder': right_shoulder
                 }
-                
+
                 # Cache the person image and coordinates
                 session['person_image_path'] = person_path
                 session['person_coordinates'] = person_coordinates
