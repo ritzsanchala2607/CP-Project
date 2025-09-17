@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_from_directory, session
+from flask import Flask, render_template, request, send_from_directory, session, redirect, url_for
 from PIL import Image
 import os, torch, cv2, mediapipe as mp
 from transformers import SamModel, SamProcessor, logging as hf_logging
@@ -270,8 +270,26 @@ def change_person():
     """Clear cached person data to allow new person upload"""
     session.pop('person_coordinates', None)
     session.pop('person_image_path', None)
-    print("[INFO] Cleared cached person data")
-    return render_template('index.html')
+
+    # Remove uploaded and output files to reset state
+    try:
+        person_disk_path = os.path.join(UPLOAD_FOLDER, 'person.jpg')
+        tshirt_disk_path = os.path.join(UPLOAD_FOLDER, 'tshirt.png')
+        if os.path.exists(person_disk_path):
+            os.remove(person_disk_path)
+        if os.path.exists(tshirt_disk_path):
+            os.remove(tshirt_disk_path)
+        if os.path.exists(OUTPUT_FOLDER):
+            for file in os.listdir(OUTPUT_FOLDER):
+                file_path = os.path.join(OUTPUT_FOLDER, file)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+        print("[INFO] Cleared cached person data and temp files")
+    except Exception as e:
+        print(f"[WARNING] Failed to clear files: {e}")
+
+    # Redirect to GET / so the app reloads fresh
+    return redirect(url_for('index'))
 
 @app.route('/cleanup', methods=['POST'])
 def cleanup():
