@@ -3,8 +3,8 @@ FROM python:3.10.12-slim
 WORKDIR /app
 
 # Set cache directories and performance optimizations
-ENV HF_HOME=/app/.cache
-ENV MPLCONFIGDIR=/app/.cache
+ENV HF_HOME=/tmp/.cache
+ENV MPLCONFIGDIR=/tmp/.cache
 ENV OMP_NUM_THREADS=4
 ENV TOKENIZERS_PARALLELISM=false
 
@@ -16,17 +16,15 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Create cache directory
-RUN mkdir -p /app/.cache && chmod -R 777 /app/.cache
+# Create upload and output directories
+RUN mkdir -p /tmp/uploads /tmp/outputs && chmod -R 777 /tmp/uploads /tmp/outputs
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pre-download model
-RUN python -c "from transformers import SamModel, SamProcessor; \
-    SamModel.from_pretrained('Zigeng/SlimSAM-uniform-50', cache_dir='/app/.cache'); \
-    SamProcessor.from_pretrained('Zigeng/SlimSAM-uniform-50', cache_dir='/app/.cache')"
+# Create temporary cache directory (will be created at runtime)
+RUN mkdir -p /tmp/.cache && chmod -R 777 /tmp/.cache
 
 # Copy app code
 COPY . .

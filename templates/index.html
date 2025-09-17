@@ -116,7 +116,13 @@
                 </div>
                 {% endif %}
                 <div class="flex justify-center mb-6">
-                    <img id="result-image" src="{{ result_img }}" alt="Result Image" class="rounded-xl">
+                    <img id="result-image" src="{{ result_img }}" alt="Result Image" class="rounded-xl" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div style="display:none;" class="text-red-500 p-4 border border-red-500 rounded-xl">
+                        <p>❌ Image failed to load</p>
+                        <p class="text-sm">Please try again or check the server logs</p>
+                        <p class="text-xs">Image URL: {{ result_img }}</p>
+                    </div>
                 </div>
                 <div class="flex justify-center">
                     <button onclick="downloadImage()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition flex items-center gap-2">

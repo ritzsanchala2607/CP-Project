@@ -32,8 +32,8 @@ if not os.path.exists(OUTPUT_FOLDER):
 model, processor = None, None
 device = None
 
-def initialize_model():
-    """Initialize model once at startup"""
+def load_model():
+    """Load model on demand (no caching to save storage)"""
     global model, processor, device
     
     # Determine device
@@ -41,39 +41,36 @@ def initialize_model():
     print(f"[INFO] Using device: {device}")
     
     print("[INFO] Loading SAM model and processor...")
-    model = SamModel.from_pretrained("Zigeng/SlimSAM-uniform-50", cache_dir="/app/.cache")
-    processor = SamProcessor.from_pretrained("Zigeng/SlimSAM-uniform-50", cache_dir="/app/.cache")
+    model = SamModel.from_pretrained("Zigeng/SlimSAM-uniform-50", cache_dir="/tmp/.cache")
+    processor = SamProcessor.from_pretrained("Zigeng/SlimSAM-uniform-50", cache_dir="/tmp/.cache")
     
     # Move model to device
     model = model.to(device)
     print(f"[INFO] Model and processor loaded successfully on {device}!")
 
-def load_model():
-    """Ensure model is loaded (should already be loaded at startup)"""
-    global model, processor
-    if model is None or processor is None:
-        print("[WARNING] Model not loaded, initializing now...")
-        initialize_model()
-
-def warmup_model():
-    """Warm up the model with a dummy inference"""
-    global model, processor, device
-    if model is None or processor is None:
-        return
-    
-    print("[INFO] Warming up model...")
+def cleanup_temp_files():
+    """Clean up temporary files to save storage"""
     try:
-        # Create a dummy image and points for warmup
-        dummy_img = Image.new('RGB', (512, 512), color='white')
-        dummy_points = [[[256, 256], [300, 300]]]
-        inputs = processor(dummy_img, input_points=dummy_points, return_tensors="pt")
-        inputs = {k: v.to(device) for k, v in inputs.items()}
-        
-        with torch.no_grad():
-            _ = model(**inputs)
-        print("[INFO] Model warmup completed!")
+        import shutil
+        if os.path.exists("/tmp/.cache"):
+            shutil.rmtree("/tmp/.cache")
+        print("[INFO] Cleaned up temporary cache files")
     except Exception as e:
-        print(f"[WARNING] Model warmup failed: {e}")
+        print(f"[WARNING] Could not clean up temp files: {e}")
+
+def cleanup_old_outputs():
+    """Clean up old output files to save storage"""
+    try:
+        if os.path.exists(OUTPUT_FOLDER):
+            for file in os.listdir(OUTPUT_FOLDER):
+                file_path = os.path.join(OUTPUT_FOLDER, file)
+                if os.path.isfile(file_path):
+                    # Remove files older than 1 hour
+                    if time.time() - os.path.getctime(file_path) > 3600:
+                        os.remove(file_path)
+                        print(f"[INFO] Removed old output file: {file}")
+    except Exception as e:
+        print(f"[WARNING] Could not clean up old outputs: {e}")
 
 @app.before_request
 def log_request_info():
@@ -86,7 +83,28 @@ def health():
 # Route to serve outputs dynamically
 @app.route('/outputs/<filename>')
 def serve_output(filename):
-    return send_from_directory(OUTPUT_FOLDER, filename)
+    print(f"[DEBUG] Serving file: {filename} from {OUTPUT_FOLDER}")
+    if not os.path.exists(OUTPUT_FOLDER):
+        print(f"[ERROR] Output folder does not exist: {OUTPUT_FOLDER}")
+        return "Output folder not found", 404
+    
+    file_path = os.path.join(OUTPUT_FOLDER, filename)
+    if not os.path.exists(file_path):
+        print(f"[ERROR] File does not exist: {file_path}")
+        return "File not found", 404
+    
+    print(f"[DEBUG] File exists, serving: {file_path}")
+    
+    # Set proper MIME type for images
+    from flask import Response
+    if filename.lower().endswith(('.jpg', '.jpeg')):
+        mimetype = 'image/jpeg'
+    elif filename.lower().endswith('.png'):
+        mimetype = 'image/png'
+    else:
+        mimetype = 'application/octet-stream'
+    
+    return send_from_directory(OUTPUT_FOLDER, filename, mimetype=mimetype)
 
 # Route to serve cached person images
 @app.route('/uploads/<filename>')
@@ -186,16 +204,40 @@ def index():
             new_tshirt = new_tshirt.resize(img.size, Image.LANCZOS)
             img_with_new_tshirt = Image.composite(new_tshirt, img, mask)
             result_path = os.path.join(OUTPUT_FOLDER, 'result.jpg')
+            
+            # Ensure output directory exists
+            os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+            
+            # Save the result image
             img_with_new_tshirt.save(result_path)
             print(f"[INFO] Result saved to {result_path}")
+            
+            # Verify file was saved
+            if os.path.exists(result_path):
+                file_size = os.path.getsize(result_path)
+                print(f"[DEBUG] File saved successfully, size: {file_size} bytes")
+            else:
+                print(f"[ERROR] File was not saved to {result_path}")
 
             # Calculate processing time
             processing_time = time.time() - start_time
             print(f"[PERF] Total processing time: {processing_time:.2f}s")
             
+            # Clean up old files to save storage
+            cleanup_old_outputs()
+            
+            # Generate a unique filename to avoid caching issues
+            import uuid
+            unique_filename = f"result_{uuid.uuid4().hex[:8]}.jpg"
+            unique_result_path = os.path.join(OUTPUT_FOLDER, unique_filename)
+            
+            # Copy the result to a unique filename
+            import shutil
+            shutil.copy2(result_path, unique_result_path)
+            
             # Serve via dynamic route with cached person info
             return render_template('index.html', 
-                                 result_img='/outputs/result.jpg',
+                                 result_img=f'/outputs/{unique_filename}',
                                  cached_person=use_cached_person,
                                  person_image_path=person_path,
                                  processing_time=f"{processing_time:.2f}s")
@@ -214,13 +256,29 @@ def change_person():
     print("[INFO] Cleared cached person data")
     return render_template('index.html')
 
+@app.route('/cleanup', methods=['POST'])
+def cleanup():
+    """Manual cleanup of temporary files"""
+    cleanup_temp_files()
+    cleanup_old_outputs()
+    return "Cleanup completed", 200
+
+@app.route('/test-image')
+def test_image():
+    """Test route to check if image serving works"""
+    # Create a simple test image
+    from PIL import Image, ImageDraw
+    img = Image.new('RGB', (200, 200), color='red')
+    draw = ImageDraw.Draw(img)
+    draw.text((50, 100), "TEST IMAGE", fill='white')
+    
+    test_path = os.path.join(OUTPUT_FOLDER, 'test.jpg')
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+    img.save(test_path)
+    
+    return f'<img src="/outputs/test.jpg" alt="Test Image">'
+
 if __name__ == '__main__':
-    # Initialize model at startup
-    print("[INFO] Initializing model...")
-    initialize_model()
-    
-    # Warm up the model
-    warmup_model()
-    
     print("[INFO] Starting Flask server...")
+    print("[INFO] Model will be loaded on first request to save memory...")
     app.run(debug=True, host='0.0.0.0')
