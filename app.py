@@ -33,20 +33,23 @@ model, processor = None, None
 device = None
 
 def load_model():
-    """Load model on demand (no caching to save storage)"""
+    """Load model on demand (CPU-only to avoid meta tensor/device issues on Spaces)."""
     global model, processor, device
     
-    # Determine device
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # Force CPU on Spaces to avoid meta tensor errors when moving devices
+    device = "cpu"
     print(f"[INFO] Using device: {device}")
     
     print("[INFO] Loading SAM model and processor...")
-    model = SamModel.from_pretrained("Zigeng/SlimSAM-uniform-50", cache_dir="/tmp/.cache")
+    model = SamModel.from_pretrained(
+        "Zigeng/SlimSAM-uniform-50",
+        cache_dir="/tmp/.cache",
+        torch_dtype=torch.float32,
+    )
     processor = SamProcessor.from_pretrained("Zigeng/SlimSAM-uniform-50", cache_dir="/tmp/.cache")
     
-    # Move model to device
-    model = model.to(device)
-    print(f"[INFO] Model and processor loaded successfully on {device}!")
+    # Do NOT move model with .to(); keep it on CPU to prevent meta tensor errors
+    print("[INFO] Model and processor loaded successfully on CPU!")
 
 def cleanup_temp_files():
     """Clean up temporary files to save storage"""
