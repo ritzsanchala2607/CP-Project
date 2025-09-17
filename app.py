@@ -144,6 +144,7 @@ def index():
             
             # Check if we have a cached person image and coordinates
             use_cached_person = 'person_coordinates' in session and 'person_image_path' in session
+            cached_person_flag = use_cached_person
             person_coordinates = None
             person_path = None
             
@@ -174,6 +175,7 @@ def index():
                 session['person_image_path'] = person_path
                 session['person_coordinates'] = person_coordinates
                 print(f"[INFO] Cached person coordinates: {person_coordinates}")
+                cached_person_flag = True
 
             # Process garment image
             tshirt_file = request.files['tshirt_image']
@@ -241,7 +243,7 @@ def index():
             # Serve via dynamic route with cached person info
             return render_template('index.html', 
                                  result_img=f'/outputs/{unique_filename}',
-                                 cached_person=use_cached_person,
+                                 cached_person=cached_person_flag,
                                  person_image_path=person_path,
                                  processing_time=f"{processing_time:.2f}s")
 
@@ -249,7 +251,13 @@ def index():
             print(f"[ERROR] {e}")
             return f"Error: {e}"
 
-    return render_template('index.html')
+    # GET request: keep person image visible if available in session
+    has_cached = 'person_coordinates' in session and 'person_image_path' in session
+    return render_template(
+        'index.html',
+        cached_person=has_cached,
+        person_image_path=session.get('person_image_path') if has_cached else None
+    )
 
 @app.route('/change_person', methods=['POST'])
 def change_person():
