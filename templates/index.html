@@ -155,7 +155,7 @@
 
     </div>
 
-    <!-- Global Full-screen Loader Overlay -->
+        <!-- Global Full-screen Loader Overlay -->
     <div id="global-loader" style="display:none;" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
         <div class="flex flex-col items-center">
             <svg class="animate-spin h-16 w-16 text-pink-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -196,23 +196,13 @@
             }
         });
 
-        // Change Person function
+        // Change Person: full refresh via POST + server redirect
         function changePerson() {
-            fetch('/change_person', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                }
-            })
-            .then(response => response.text())
-            .then(html => {
-                // Replace the current page content
-                document.documentElement.innerHTML = html;
-            })
-            .catch(error => {
-                console.error('Error changing person:', error);
-                alert('Error changing person. Please refresh the page.');
-            });
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/change_person';
+            document.body.appendChild(form);
+            form.submit();
         }
 
         // Show file name + preview (person only)
