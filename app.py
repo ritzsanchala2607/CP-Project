@@ -114,6 +114,16 @@ def serve_output(filename):
 def serve_upload(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
+# Route to serve reference images
+@app.route('/Ref%20img/<filename>')
+def serve_ref_image(filename):
+    return send_from_directory('Ref Img', filename)
+
+# Alternative route for reference images (without URL encoding)
+@app.route('/Ref Img/<filename>')
+def serve_ref_image_alt(filename):
+    return send_from_directory('Ref Img', filename)
+
 def detect_pose_and_get_coordinates(person_path):
     """Extract pose coordinates from person image"""
     mp_pose = mp.solutions.pose

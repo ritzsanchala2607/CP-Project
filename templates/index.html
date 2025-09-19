@@ -13,6 +13,51 @@
 
     <h1 class="text-4xl font-bold text-blue-400 mb-10">Virtual Fashion Try-On</h1>
 
+    <!-- Instructions Section -->
+    <div class="w-full max-w-6xl mb-8 bg-gray-800 rounded-2xl p-6 shadow-lg">
+        <h2 class="text-2xl font-bold text-yellow-400 mb-4 text-center">Photo Upload Guidelines for Virtual Try-On</h2>
+        
+        <div class="space-y-4 text-gray-300">
+            <p class="text-center text-lg">
+                Please upload a clear, high-quality image (recommended size: <span class="text-green-400 font-semibold">greater than 1 MB</span>).
+            </p>
+            
+            <p class="text-center">
+                A <span class="text-blue-400 font-semibold">passport-size photo</span> is preferable. Alternatively, you may upload any photo where you are closer to the camera and both shoulders are clearly visible.
+            </p>
+            
+            <p class="text-center">
+                For <span class="text-pink-400 font-semibold">female users</span>: Kindly ensure that your hair is not covering your shoulders in the photo.
+            </p>
+        </div>
+
+        <!-- Reference Images -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Male Reference -->
+            <div class="text-center">
+                <h3 class="text-lg font-semibold text-blue-400 mb-3">Male Reference</h3>
+                <div class="bg-gray-700 rounded-lg p-4 border-2 border-blue-500">
+                    <div class="w-32 h-40 mx-auto rounded-lg flex items-center justify-center overflow-hidden">
+                        <img src="/Ref Img/young-male-entrepreneur-making-eye-contact-against-blue-background.jpg" alt="Male Reference" class="object-cover w-full h-full rounded-lg">
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">Both shoulders clearly visible</p>
+                </div>
+            </div>
+        
+            <!-- Female Reference -->
+            <div class="text-center">
+                <h3 class="text-lg font-semibold text-pink-400 mb-3">Female Reference</h3>
+                <div class="bg-gray-700 rounded-lg p-4 border-2 border-pink-500">
+                    <div class="w-32 h-40 mx-auto rounded-lg flex items-center justify-center overflow-hidden">
+                        <img src="/Ref Img/businesswoman-with-glasses-crossed-arms.jpg" alt="Female Reference" class="object-cover w-full h-full rounded-lg">
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">Hair not covering shoulders</p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
     <div class="flex flex-col md:flex-row gap-10 w-full max-w-6xl">
 
         <!-- LEFT: Input Form -->
