@@ -13,50 +13,6 @@
 
     <h1 class="text-4xl font-bold text-blue-400 mb-10">Virtual Fashion Try-On</h1>
 
-    <!-- Instructions Section -->
-    <div class="w-full max-w-6xl mb-8 bg-gray-800 rounded-2xl p-6 shadow-lg">
-        <h2 class="text-2xl font-bold text-yellow-400 mb-4 text-center">Photo Upload Guidelines for Virtual Try-On</h2>
-        <div class="space-y-4 text-gray-300">
-            <p class="text-center text-lg">
-                Please upload a clear, high-quality image (recommended size: <span class="text-green-400 font-semibold">greater than 1 MB</span>).
-            </p>
-            
-            <p class="text-center">
-                A <span class="text-blue-400 font-semibold">passport-size photo</span> is preferable. Alternatively, you may upload any photo where you are closer to the camera and both shoulders are clearly visible.
-            </p>
-            
-            <p class="text-center">
-                For <span class="text-pink-400 font-semibold">female users</span>: Kindly ensure that your hair is not covering your shoulders in the photo.
-            </p>
-        </div>
-
-        <!-- Reference Images -->
-        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Male Reference -->
-            <div class="text-center">
-                <h3 class="text-lg font-semibold text-blue-400 mb-3">Male Reference</h3>
-                <div class="bg-gray-700 rounded-lg p-4 border-2 border-blue-500">
-                    <div class="w-32 h-40 mx-auto rounded-lg flex items-center justify-center overflow-hidden">
-                        <img src="/Ref Img/young-male-entrepreneur-making-eye-contact-against-blue-background.jpg" alt="Male Reference" class="object-cover w-full h-full rounded-lg">
-                    </div>
-                    <p class="text-xs text-gray-400 mt-2">Both shoulders clearly visible</p>
-                </div>
-            </div>
-        
-            <!-- Female Reference -->
-            <div class="text-center">
-                <h3 class="text-lg font-semibold text-pink-400 mb-3">Female Reference</h3>
-                <div class="bg-gray-700 rounded-lg p-4 border-2 border-pink-500">
-                    <div class="w-32 h-40 mx-auto rounded-lg flex items-center justify-center overflow-hidden">
-                        <img src="/Ref Img/businesswoman-with-glasses-crossed-arms.jpg" alt="Female Reference" class="object-cover w-full h-full rounded-lg">
-                    </div>
-                    <p class="text-xs text-gray-400 mt-2">Hair not covering shoulders</p>
-                </div>
-            </div>
-        </div>
-        
-    </div>
-
     <div class="flex flex-col md:flex-row gap-10 w-full max-w-6xl">
 
         <!-- LEFT: Input Form -->
@@ -104,6 +60,34 @@
                         <img id="person_preview" class="hidden max-h-32 rounded-lg border border-gray-600">
                     </div>
                     {% endif %}
+                </div>
+
+                <!-- Gender Selection -->
+                <div>
+                    <h2 class="text-lg font-semibold mb-3">Select Gender</h2>
+                    <div class="flex gap-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="gender" value="male" checked class="sr-only">
+                            <div class="gender-option flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-blue-500 bg-blue-500/20 text-blue-400">
+                                <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg> -->
+                                <span>Male</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="gender" value="female" class="sr-only">
+                            <div class="gender-option flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gray-600 text-gray-400">
+                                <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg> -->
+                                <span>Female</span>
+                            </div>
+                        </label>
+                    </div>
+                    <!-- <p class="text-xs text-gray-400 mt-2">
+                        <span class="text-pink-400">Female mode:</span> Uses chest-to-hip detection to avoid hair on shoulders
+                    </p> -->
                 </div>
 
                 <!-- Garment Image Upload with Cropper -->
@@ -248,6 +232,26 @@
             document.body.appendChild(form);
             form.submit();
         }
+
+        // Gender selection handling
+        document.querySelectorAll('input[name="gender"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Update visual styling
+                document.querySelectorAll('.gender-option').forEach(option => {
+                    option.classList.remove('border-blue-500', 'bg-blue-500/20', 'text-blue-400', 'border-pink-500', 'bg-pink-500/20', 'text-pink-400');
+                    option.classList.add('border-gray-600', 'text-gray-400');
+                });
+                
+                const selectedOption = this.parentElement.querySelector('.gender-option');
+                if (this.value === 'male') {
+                    selectedOption.classList.remove('border-gray-600', 'text-gray-400');
+                    selectedOption.classList.add('border-blue-500', 'bg-blue-500/20', 'text-blue-400');
+                } else {
+                    selectedOption.classList.remove('border-gray-600', 'text-gray-400');
+                    selectedOption.classList.add('border-pink-500', 'bg-pink-500/20', 'text-pink-400');
+                }
+            });
+        });
 
         // Show file name + preview (person only)
         function showFileName(inputId, filenameId, previewId) {
